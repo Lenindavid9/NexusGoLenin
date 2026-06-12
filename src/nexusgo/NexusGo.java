@@ -21,6 +21,7 @@ public class NexusGo {
     public static void main(String[] args) {
         
          VistaPrincipalOperario ventana =new VistaPrincipalOperario();
+         
 
     ventana.setVisible(true);
     

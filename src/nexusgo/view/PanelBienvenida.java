@@ -14,17 +14,20 @@ import javax.swing.JPanel;
  */
 public class PanelBienvenida extends JPanel{
     
-    
     private JLabel mensaje,titulo;
+    private String nombre;
+    private String rol;
    
-    
-    
-   public PanelBienvenida(){
+
+    public PanelBienvenida(String nombre, String rol) {
+        this.nombre = nombre;
+        this.rol = rol;
+        
+        
         setLayout(null);
         setBackground(Color.WHITE);
 
-        titulo = new JLabel(
-                "Hola, Bienvenid@ a Nexus GO");
+        titulo = new JLabel("Hola"+nombre+rol+" a Nexus GO");
 
         titulo.setBounds(180, 40, 350, 30);
 

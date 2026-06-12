@@ -12,6 +12,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import nexusgo.model.Usuario;
 
 /**
  *
@@ -24,23 +25,20 @@ public class VistaPrincipalOperario extends JFrame {
     private JLabel titulo, mensaje;
     private JButton breporte, barranque;
     private PanelBienvenida bienvenida;
+    Usuario lenin = new Usuario("Lenin","operario");
    
 
     public VistaPrincipalOperario() {
-        //titulo
-        super("Inventario");
-        //Mensaje de bienvenida
-        titulo = new JLabel("Hola, Operari@ Bienvenido a Nexus GO");
-        titulo.setBounds(120, 30, 400, 30);
+        super("principal Operario");
         setLayout(new BorderLayout());
-
+        
         //barra lateral
         sidebar = new VistaBarraLateral();
         breporte = new JButton("reportes");
         sidebar.add(breporte);
         
         //Panel de bienvenida 
-        bienvenida = new PanelBienvenida();
+        bienvenida = new PanelBienvenida(lenin.getNombre(),lenin.getRol());
         
         add(bienvenida,BorderLayout.CENTER);
 

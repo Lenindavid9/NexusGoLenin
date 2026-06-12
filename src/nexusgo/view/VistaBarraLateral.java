@@ -36,11 +36,8 @@ public class VistaBarraLateral extends JPanel {
         add(bCasa);
         add(BInventario);
         add(misCitas);
-     
-        
-        
 
-        
+             
 }
     
     
