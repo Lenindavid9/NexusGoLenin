@@ -3,10 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/NexusGo.java</file>
             <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaBarraLateral.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaOperarioInventario.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/ImagenFondo.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaPrincipalOperario.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/NexusGo.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/PanelBienvenida.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/model/Persona.java</file>
         </group>
     </open-files>
 </project-private>
