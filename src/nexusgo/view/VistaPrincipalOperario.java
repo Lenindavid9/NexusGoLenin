@@ -42,7 +42,7 @@ public class VistaPrincipalOperario extends JFrame {
         //posicion de izquierda de la barra lateral
         add(sidebar, BorderLayout.WEST);
 
-         bienvenida = new PanelBienvenida("hola");
+         
 
         add(bienvenida, BorderLayout.CENTER);
 
