@@ -20,11 +20,11 @@ import javax.swing.JPanel;
 public class VistaPrincipalOperario extends JFrame {
 
     private VistaBarraLateral sidebar;
-    private JPanel panelBienvenida;
     private FlowLayout miflow;
     private JLabel titulo, mensaje;
     private JButton breporte, barranque;
     private PanelBienvenida bienvenida;
+   
 
     public VistaPrincipalOperario() {
         //titulo
@@ -38,15 +38,21 @@ public class VistaPrincipalOperario extends JFrame {
         sidebar = new VistaBarraLateral();
         breporte = new JButton("reportes");
         sidebar.add(breporte);
+        
+        //Panel de bienvenida 
+        bienvenida = new PanelBienvenida();
+        
+        add(bienvenida,BorderLayout.CENTER);
 
         //posicion de izquierda de la barra lateral
         add(sidebar, BorderLayout.WEST);
-
+        
+        
          
 
-        add(bienvenida, BorderLayout.CENTER);
+       
 
-        add(panelBienvenida, BorderLayout.CENTER);
+     
 
         //dimensiones de la ventana 
         setSize(800, 500);

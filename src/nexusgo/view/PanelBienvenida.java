@@ -14,8 +14,8 @@ import javax.swing.JPanel;
  */
 public class PanelBienvenida extends JPanel{
     
-    private JLabel titulo;
-    private JLabel mensaje;
+    
+    private JLabel mensaje,titulo;
    
     
     
@@ -24,8 +24,7 @@ public class PanelBienvenida extends JPanel{
         setBackground(Color.WHITE);
 
         titulo = new JLabel(
-                "Hola, Bienvenid@ a Nexus GO"
-        );
+                "Hola, Bienvenid@ a Nexus GO");
 
         titulo.setBounds(180, 40, 350, 30);
 
