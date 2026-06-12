@@ -16,7 +16,7 @@ public class PanelBienvenida extends JPanel{
     
     private JLabel titulo;
     private JLabel mensaje;
-    private String rol;
+   
     
     
    public PanelBienvenida(){
@@ -24,7 +24,7 @@ public class PanelBienvenida extends JPanel{
         setBackground(Color.WHITE);
 
         titulo = new JLabel(
-                "Hola, " + rol + " Bienvenid@ a Nexus GO"
+                "Hola, Bienvenid@ a Nexus GO"
         );
 
         titulo.setBounds(180, 40, 350, 30);
