@@ -33,8 +33,7 @@ public class VistaOperarioInventario extends JFrame {
         
        
         
-      
-        
+            
         
         setSize(800,500);
         setLocationRelativeTo(null);

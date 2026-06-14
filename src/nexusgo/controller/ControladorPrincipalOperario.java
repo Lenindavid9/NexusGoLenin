@@ -13,47 +13,51 @@ import nexusgo.view.VistaPrincipalOperario;
  *
  * @author USUARIO
  */
-public class ControladorPrincipalOperario implements ActionListener{
-    
-    
+public class ControladorPrincipalOperario implements ActionListener {
+
     private VistaPrincipalOperario vista;
-    
-   
-    public ControladorPrincipalOperario(VistaPrincipalOperario vista){
-        
-        
-        this.vista=vista;
+
+    public ControladorPrincipalOperario(VistaPrincipalOperario vista) {
+
+        this.vista = vista;
         this.vista.getsidebar().bInventario.addActionListener(this);
         this.vista.getsidebar().bCasa.addActionListener(this);
         this.vista.getsidebar().misCitas.addActionListener(this);
-        
-       
-    
+
     }
-    
+
     //metodo para abrir el inventario
-    
-    public void abrirInventario(){
-    
-    VistaOperarioInventario inventario = new VistaOperarioInventario();
-    
-    inventario.setVisible(true);
-    //Cierra y guarda la variable vista
-    vista.dispose();
-    
+    public void abrirCasa() {
+        VistaPrincipalOperario casa = new VistaPrincipalOperario();
+
+        casa.setVisible(true);
+        //Cierra y guarda la variable vista
+        vista.dispose();
+
     }
-    
+
+    public void abrirInventario() {
+
+        VistaOperarioInventario inventario = new VistaOperarioInventario();
+
+        inventario.setVisible(true);
+        //Cierra y guarda la variable vista
+        vista.dispose();
+
+    }
+
     //funcionamiento del boton de inventario
     @Override
     public void actionPerformed(ActionEvent e) {
-       if(e.getSource()== vista.getsidebar().bInventario){
-       
-       abrirInventario();
-       }
+        if (e.getSource() == vista.getsidebar().bInventario) {
+
+            abrirInventario();
+        }
+        //boton de la casa
+        if (e.getSource() == vista.getsidebar().bCasa) {
+
+            abrirCasa();
+        }
     }
-  
-    
-    
-    
-    
+
 }
