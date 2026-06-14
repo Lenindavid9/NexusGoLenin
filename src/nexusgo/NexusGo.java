@@ -5,6 +5,7 @@
 package nexusgo;
 
 import javax.swing.JFrame;
+import nexusgo.controller.ControladorPrincipalOperario;
 import nexusgo.view.PanelBienvenida;
 import nexusgo.view.VistaBarraLateral;
 import nexusgo.view.VistaPrincipalOperario;
@@ -19,14 +20,12 @@ public class NexusGo {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-         VistaPrincipalOperario ventana =new VistaPrincipalOperario();
-         
 
-    ventana.setVisible(true);
-    
- 
-        
+        VistaPrincipalOperario ventana = new VistaPrincipalOperario();
+
+        ControladorPrincipalOperario controlador = new ControladorPrincipalOperario(ventana);
+
+        ventana.setVisible(true);
 
     }
 

@@ -22,19 +22,19 @@ public class VistaBarraLateral extends JPanel {
 
     public Container contenedor;
     public JPanel barraLateral,barraSuperior;
-    public JButton bCasa,BInventario,misCitas;
+    public JButton bCasa,bInventario,misCitas;
     
     public VistaBarraLateral() {
         
         setLayout(new GridLayout(7, 1, 10, 10));
 
         bCasa = new JButton("Inicio");
-        BInventario = new JButton("Inventario");
+        bInventario = new JButton("Inventario");
         misCitas = new JButton("Ventas");
         
 
         add(bCasa);
-        add(BInventario);
+        add(bInventario);
         add(misCitas);
 
              

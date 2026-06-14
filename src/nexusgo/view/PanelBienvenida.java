@@ -27,7 +27,7 @@ public class PanelBienvenida extends JPanel{
         setLayout(null);
         setBackground(Color.WHITE);
 
-        titulo = new JLabel("Hola"+nombre+rol+" a Nexus GO");
+        titulo = new JLabel("Hola "+nombre+" "+rol+" a Nexus GO");
 
         titulo.setBounds(180, 40, 350, 30);
 

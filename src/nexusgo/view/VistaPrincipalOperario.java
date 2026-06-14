@@ -25,7 +25,10 @@ public class VistaPrincipalOperario extends JFrame {
     private JLabel titulo, mensaje;
     private JButton breporte, barranque;
     private PanelBienvenida bienvenida;
+    private JPanel contenido;
     Usuario lenin = new Usuario("Lenin","operario");
+    
+   
    
 
     public VistaPrincipalOperario() {
@@ -34,8 +37,8 @@ public class VistaPrincipalOperario extends JFrame {
         
         //barra lateral
         sidebar = new VistaBarraLateral();
-        breporte = new JButton("reportes");
-        sidebar.add(breporte);
+        
+        contenido = new JPanel();
         
         //Panel de bienvenida 
         bienvenida = new PanelBienvenida(lenin.getNombre(),lenin.getRol());
@@ -45,17 +48,20 @@ public class VistaPrincipalOperario extends JFrame {
         //posicion de izquierda de la barra lateral
         add(sidebar, BorderLayout.WEST);
         
+        add(contenido, BorderLayout.CENTER);
         
-         
-
-       
-
-     
+      
 
         //dimensiones de la ventana 
         setSize(800, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
+    
+     public VistaBarraLateral getsidebar(){
+        return sidebar;
+        }
+     
+      
 
 }
