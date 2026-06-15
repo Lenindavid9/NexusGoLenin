@@ -21,6 +21,22 @@ public class PermisosInventario {
         this.editar = editar;
         this.salida = salida;
     }
+
+    public boolean permiteVer() {
+        return ver;
+    }
+
+    public boolean permiteAgregar() {
+        return agregar;
+    }
+
+    public boolean permiteEditar() {
+        return editar;
+    }
+
+    public boolean permiteSalida() {
+        return salida;
+    }
    
     
     
