@@ -8,6 +8,9 @@ import java.awt.BorderLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import nexusgo.model.GestorPermisos;
+import nexusgo.model.PermisosInventario;
+import nexusgo.model.Usuario;
 
 /**
  *
@@ -17,6 +20,8 @@ public class VistaOperarioInventario extends JFrame {
     
      private VistaBarraLateral sidebar;
      private JButton btnPrueba;
+     PermisosInventario permisos =GestorPermisos.obtenerPermisos(usuario.getUsari);
+     Usuario usuario = new Usuario("Lenin","operario");
      
      
      public VistaOperarioInventario(){
