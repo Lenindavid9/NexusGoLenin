@@ -53,11 +53,8 @@ public class ControladorPrincipalOperario implements ActionListener {
 
             abrirInventario();
         }
-        //boton de la casa
-        if (e.getSource() == vista.getsidebar().bCasa) {
-
-            abrirCasa();
-        }
+      
+        
     }
 
 }
