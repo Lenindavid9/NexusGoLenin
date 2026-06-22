@@ -3,12 +3,13 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaPrincipalOperario.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaOperarioInventario.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/NexusGo.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/controller/ControladorPrincipalOperario.java</file>
-            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/PanelBienvenida.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/model/Producto.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/model/ProductoDao.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/model/Crud.java</file>
             <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/controller/ControladorInventarioOperario.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/NexusGo.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/view/VistaAgregarHerramienta.java</file>
+            <file>file:/C:/Users/USUARIO/Documents/NetBeansProjects/NexusGo/src/nexusgo/model/HerramientaDao.java</file>
         </group>
     </open-files>
 </project-private>

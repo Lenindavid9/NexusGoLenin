@@ -26,18 +26,10 @@ public class ControladorPrincipalOperario implements ActionListener {
 
     }
 
-    //metodo para abrir el inventario
-    public void abrirCasa() {
-        VistaPrincipalOperario casa = new VistaPrincipalOperario();
-
-        casa.setVisible(true);
-        //Cierra y guarda la variable vista
-        vista.dispose();
-
-    }
+  
 
     public void abrirInventario() {
-
+        //aqui crea el inventario
         VistaOperarioInventario inventario = new VistaOperarioInventario();
 
         inventario.setVisible(true);
@@ -50,7 +42,6 @@ public class ControladorPrincipalOperario implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == vista.getsidebar().bInventario) {
-
             abrirInventario();
         }
       

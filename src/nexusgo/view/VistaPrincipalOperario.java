@@ -20,48 +20,57 @@ import nexusgo.model.Usuario;
  */
 public class VistaPrincipalOperario extends JFrame {
 
-    private VistaBarraLateral sidebar;
-    private FlowLayout miflow;
-    private JLabel titulo, mensaje;
-    private JButton breporte, barranque;
-    private PanelBienvenida bienvenida;
-    private JPanel contenido;
-    Usuario lenin = new Usuario("Lenin","operario");
+  public VistaBarraLateral sidebar;
+    public FlowLayout miflow;
+    public JLabel titulo, mensaje;
+    public JButton breporte, barranque;
+    public PanelBienvenida bienvenida;
     
-   
-   
+    // Este panel será el contenedor dinámico donde se meterán los módulos
+    private JPanel contenido; 
+    
+    // Usuario de prueba para la sesión actual
+    Usuario lenin = new Usuario("Isabella", "Supervisora");
 
     public VistaPrincipalOperario() {
-        super("principal Operario");
+        super("Sistema NexusGO - Panel de Operario");
         setLayout(new BorderLayout());
         
-        //barra lateral
+        // 1. Inicializar y posicionar la barra lateral a la izquierda (WEST)
         sidebar = new VistaBarraLateral();
-        
-        contenido = new JPanel();
-        
-        //Panel de bienvenida 
-        bienvenida = new PanelBienvenida(lenin.getNombre(),lenin.getRol());
-        
-        add(bienvenida,BorderLayout.CENTER);
-
-        //posicion de izquierda de la barra lateral
         add(sidebar, BorderLayout.WEST);
         
-        add(contenido, BorderLayout.CENTER);
+        // 2. Inicializar el panel 'contenido' explícitamente con BorderLayout.
+        contenido = new JPanel(new BorderLayout());
         
-      
+        // 3. Inicializar el Panel de Bienvenida inicial
+        bienvenida = new PanelBienvenida(lenin.getNombre(), lenin.getRol());
+        
+        // 4. Meter la bienvenida DENTRO del panel de contenido
+        contenido.add(bienvenida, BorderLayout.CENTER);
 
-        //dimensiones de la ventana 
-        setSize(800, 500);
+        // 5. Agregar el contenedor general 'contenido' al centro del JFrame
+        add(contenido, BorderLayout.CENTER);
+
+        // Dimensiones de la ventana optimizadas para que quepan bien las tablas de inventario
+        setSize(1100, 680);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
-     public VistaBarraLateral getsidebar(){
+    /**
+     * Getter público para que el controlador pueda escuchar los botones del menú lateral.
+     */
+    public VistaBarraLateral getsidebar(){
         return sidebar;
-        }
-     
+    }
+    
+    /**
+     * Getter público para el panel de contenido central dinámico.
+     */
+    public JPanel getContenido() {
+        return contenido;
+    }
       
 
 }

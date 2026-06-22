@@ -1,0 +1,154 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package nexusgo.model;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author USUARIO
+ */
+public class ProductoDao implements Crud<Producto> {
+
+   Conexion conexion = new Conexion();
+    
+    // NOTA: Se eliminaron las variables globales con, ps y rs de aquí para evitar
+    // conflictos de hilos, ya que se manejan correctamente de forma local dentro del try-with-resources.
+
+    // LISTAR PRODUCTOS
+    @Override
+    public List<Producto> listar() {
+        List<Producto> lista = new ArrayList<>();
+        // 🚨 CORREGIDO: Cambiado de 'producto' a 'productos' (en plural)
+        String sql = "SELECT * FROM productos";
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql); 
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Producto producto = new Producto();
+                producto.setIdProducto(rs.getInt("id_producto"));
+                producto.setNombreProducto(rs.getString("nombre_producto"));
+                producto.setDescripcion(rs.getString("descripcion"));
+                producto.setStockActual(rs.getInt("stock_actual"));
+                producto.setStockMinimo(rs.getInt("stock_minimo"));
+                producto.setPrecioCompra(rs.getDouble("precio_compra"));
+                producto.setUrlImagen(rs.getString("url_imagen"));
+
+                lista.add(producto);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al listar productos: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    // C - CREATE: AGREGAR PRODUCTO
+    @Override
+    public int agregar(Producto producto) {
+        String sql = """
+                     INSERT INTO productos 
+                     (nombre_producto, descripcion, stock_actual, stock_minimo, precio_compra, url_imagen) 
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     """;
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, producto.getNombreProducto());
+            ps.setString(2, producto.getDescripcion());
+            ps.setInt(3, producto.getStockActual());
+            ps.setInt(4, producto.getStockMinimo());
+            ps.setDouble(5, producto.getPrecioCompra());
+            ps.setString(6, producto.getUrlImagen());
+
+            return ps.executeUpdate(); 
+
+        } catch (SQLException e) {
+            System.out.println("Error al agregar producto: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    // U - UPDATE: EDITAR PRODUCTO
+    @Override
+    public int editar(Producto producto) {
+        String sql = """
+                     UPDATE productos 
+                     SET nombre_producto = ?, descripcion = ?, stock_actual = ?, stock_minimo = ?, precio_compra = ?, url_imagen = ? 
+                     WHERE id_producto = ?
+                     """;
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, producto.getNombreProducto());
+            ps.setString(2, producto.getDescripcion());
+            ps.setInt(3, producto.getStockActual());
+            ps.setInt(4, producto.getStockMinimo());
+            ps.setDouble(5, producto.getPrecioCompra());
+            ps.setString(6, producto.getUrlImagen());
+            ps.setInt(7, producto.getIdProducto());
+
+            return ps.executeUpdate(); 
+
+        } catch (SQLException e) {
+            System.out.println("Error al editar producto: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    // D - DELETE: ELIMINAR PRODUCTO
+    @Override
+    public int eliminar(int id) {
+        String sql = "DELETE FROM productos WHERE id_producto = ?";
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            return ps.executeUpdate(); 
+
+        } catch (SQLException e) {
+            System.out.println("Error al eliminar producto: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    // MÉTODO PROPIO (Buscar un único producto)
+    public Producto buscarPorId(int id) {
+        Producto producto = null;
+        // 🚨 CORREGIDO: Se añadió el WHERE y se seleccionaron todos los campos (*) para poder mapear el objeto completo sin errores
+        String sql = "SELECT * FROM productos WHERE id_producto = ?";
+        
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    producto = new Producto();
+                    producto.setIdProducto(rs.getInt("id_producto")); 
+                    producto.setNombreProducto(rs.getString("nombre_producto"));
+                    producto.setDescripcion(rs.getString("descripcion"));
+                    producto.setStockActual(rs.getInt("stock_actual"));
+                    producto.setStockMinimo(rs.getInt("stock_minimo"));
+                    producto.setPrecioCompra(rs.getDouble("precio_compra"));
+                    producto.setUrlImagen(rs.getString("url_imagen"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al buscar producto por ID: " + e.getMessage());
+        }
+        return producto;
+    }
+
+}

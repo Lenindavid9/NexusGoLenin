@@ -29,8 +29,8 @@ public class VistaBarraLateral extends JPanel {
         setLayout(new GridLayout(7, 1, 10, 10));
 
         bCasa = new JButton("Inicio");
-        bInventario = new JButton("Inventario");
-        misCitas = new JButton("Ventas");
+        bInventario = new JButton("Ventas");
+        misCitas = new JButton("Inventario");
         
 
         add(bCasa);
