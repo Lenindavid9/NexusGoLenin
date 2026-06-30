@@ -8,6 +8,8 @@ import nexusgo.model.Herramientas;
 import nexusgo.model.HerramientaDao;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -25,136 +27,232 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import nexusgo.model.Usuario;
 import nexusgo.view.VistaAgregarHerramienta;
+import nexusgo.view.VistaInicioSesion;
+import nexusgo.view.VistaRegistrarSalida;
 
 /**
  *
  * @author USUARIO
  */
-public class ControladorInventarioOperario implements ActionListener{
+public class ControladorInventarioOperario implements ActionListener {
     
-  // Componentes de las vistas (V)
-    private final VistaPrincipalOperario vistaPrincipal;
-    private VistaOperarioInventario panelInventario;
-    private VistaAgregarProducto panelFormulario; 
+    private final VistaPrincipalOperario vistaPrincipal;       
+    private VistaOperarioInventario panelInventario;          
+    private VistaAgregarProducto panelFormulario;             
     private VistaAgregarHerramienta panelFormularioHerramienta; 
-    
-    // Componentes del modelo / Acceso a datos (M) - Inicializados directamente para cumplir la regla 'final'
-    private final ProductoDao productoDao = new ProductoDao();
-    private final HerramientaDao herramientaDao = new HerramientaDao();
-    private DefaultTableModel modeloTablaProductos;
-    private DefaultTableModel modeloTablaHerramientas;
+    private VistaRegistrarSalida panelSalidaInsumo;           
+
+    // Componentes de datos y estado de sesión
+    private final ProductoDao productoDao = new ProductoDao();       
+    private final HerramientaDao herramientaDao = new HerramientaDao(); 
+    private final Usuario usuarioLogueado; 
+    private int idSeleccionado = -1;
 
     /**
-     * Constructor del controlador. Acopla las vistas y arranca los listeners.
+     * Constructor del controlador que acopla la vista general contenedora y la sesión del usuario.
      */
-    public ControladorInventarioOperario(VistaPrincipalOperario vistaPrincipal) {
+    public ControladorInventarioOperario(VistaPrincipalOperario vistaPrincipal, Usuario usuarioLogueado) {
         this.vistaPrincipal = vistaPrincipal;
-        
-        try {
-            this.panelInventario = new VistaOperarioInventario();
-            this.panelFormulario = new VistaAgregarProducto(); 
-            this.panelFormularioHerramienta = new VistaAgregarHerramienta(); 
+        this.usuarioLogueado = usuarioLogueado; 
 
-            // Enlazar escuchadores de eventos
+        try {
+            // Inicialización de componentes gráficos
+            this.panelInventario = new VistaOperarioInventario();
+            this.panelFormulario = new VistaAgregarProducto();
+            this.panelFormularioHerramienta = new VistaAgregarHerramienta();
+            this.panelSalidaInsumo = new VistaRegistrarSalida();
+
             inicializarListeners();
+
+            // Carga inicial de datos desde MySQL
+            listarProductosEnTabla();
+            listarHerramientasEnTabla();
             
+            // Configura títulos e interfaz según el rol
+            aplicarPermisosPorRol();
+            
+            // Inyecta el panel de bienvenida con el nombre y rol reales extraídos de la BD
+            cambiarPanelCentral(new PanelBienvenida(usuarioLogueado.getNombre(), usuarioLogueado.getRol()));
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, 
-                "Error crítico al inicializar los módulos del sistema: " + e.getMessage(), 
-                "Error Crítico de Arranque", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                    "Error crítico al inicializar los módulos: " + e.getMessage(),
+                    "Error de Arranque", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
-     * Une los botones y componentes que disparan eventos con este controlador.
+     * Configura el título dinámico de la ventana principal para identificar la sesión actual.
      */
+    private void aplicarPermisosPorRol() {
+        String rol = usuarioLogueado.getRol();
+
+        // Ambos roles tienen acceso total y visibilidad de los botones de creación
+        panelInventario.btnAgregarProducto.setVisible(true);
+        panelInventario.btnAgregarHerramienta.setVisible(true);
+
+        if (rol.equalsIgnoreCase("Operario")) {
+            vistaPrincipal.setTitle("Sistema NexusGO - Panel de Operario: " + usuarioLogueado.getNombre());
+        } 
+        else if (rol.equalsIgnoreCase("Supervisor")) {
+            vistaPrincipal.setTitle("Sistema NexusGO - Panel de Supervisión: " + usuarioLogueado.getNombre());
+        }
+    }
+
     private void inicializarListeners() {
         try {
-            // Listeners del Sidebar (Menú lateral izquierdo de la vista principal)
-            this.vistaPrincipal.getsidebar().bCasa.addActionListener(this);
-            this.vistaPrincipal.getsidebar().misCitas.addActionListener(this);
-            
-            // Listeners de la pestaña de tablas generales (Inventario)
-            this.panelInventario.btnAgregarProducto.addActionListener(this);
-            this.panelInventario.btnAgregarHerramienta.addActionListener(this);
-            this.panelInventario.cerrarSesion.addActionListener(this);
-            
-            // Listeners del formulario de adición/edición de Productos
-            this.panelFormulario.btnVolver.addActionListener(this);
-            this.panelFormulario.btnEditar.addActionListener(this);
-            this.panelFormulario.btnImagen.addActionListener(this);
-            
-            // Listeners del formulario de adición/edición de Herramientas
+            this.vistaPrincipal.getsidebar().bCasa.addActionListener(this);       
+            this.vistaPrincipal.getsidebar().misCitas.addActionListener(this);   
+
+            this.panelInventario.btnAgregarProducto.addActionListener(this);      
+            this.panelInventario.btnAgregarHerramienta.addActionListener(this);   
+            this.panelInventario.cerrarSesion.addActionListener(this);          
+
+            // Clics en la tabla de productos / insumos
+            this.panelInventario.tablaProductos.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int fila = panelInventario.tablaProductos.getSelectedRow(); 
+                    if (fila >= 0) {
+                        lanzarMenuDecision("Producto", fila); 
+                    }
+                }
+            });
+
+            // Clics en la tabla de herramientas
+            this.panelInventario.tablaHerramientas.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int fila = panelInventario.tablaHerramientas.getSelectedRow(); 
+                    if (fila >= 0) {
+                        lanzarMenuDecision("Herramienta", fila); 
+                    }
+                }
+            });
+
+            this.panelFormulario.btnVolver.addActionListener(this);    
+            this.panelFormulario.btnEditar.addActionListener(this);    
+            this.panelFormulario.btnImagen.addActionListener(this);    
+
             this.panelFormularioHerramienta.btnVolver.addActionListener(this);
-            this.panelFormularioHerramienta.btnEditar.addActionListener(this); 
-            this.panelFormularioHerramienta.btnImagen.addActionListener(this); 
-            
+            this.panelFormularioHerramienta.btnEditar.addActionListener(this);
+            this.panelFormularioHerramienta.btnImagen.addActionListener(this);
+
+            this.panelSalidaInsumo.btnRegistrarSalida.addActionListener(this);
+            this.panelSalidaInsumo.btnVolver.addActionListener(this);
+
         } catch (NullPointerException npe) {
-            System.err.println("Error al enlazar listeners. Verifique los getters de las vistas: " + npe.getMessage());
+            System.err.println("Error al enlazar los listeners del controlador: " + npe.getMessage());
+        }
+    }
+
+    /**
+     * Lanza el menú contextual para editar, borrar o registrar movimientos físicos de stock.
+     * Compartido con los mismos permisos completos para Operarios y Supervisores.
+     */
+    private void lanzarMenuDecision(String tipo, int fila) {
+        String[] opciones = {"Registrar Salida", "Editar", "Eliminar"};
+        int seleccion = JOptionPane.showOptionDialog(panelInventario,
+                "¿Qué acción desea realizar con el registro seleccionado?",
+                "NEXUS - Panel de Control",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+
+        if (seleccion == 0) { // Registrar Salida
+            if (tipo.equals("Producto")) {
+                idSeleccionado = (int) panelInventario.tablaProductos.getValueAt(fila, 0);
+                panelSalidaInsumo.txtCantidadSalida.setText(""); 
+                cambiarPanelCentral(this.panelSalidaInsumo);      
+            } else {
+                JOptionPane.showMessageDialog(panelInventario, "Las herramientas cambian por estado físico, no numérico.");
+            }
+        } 
+        else if (seleccion == 1) { // Editar
+            if (tipo.equals("Producto")) {
+                idSeleccionado = (int) panelInventario.tablaProductos.getValueAt(fila, 0);
+                panelFormulario.txtNombre.setText(panelInventario.tablaProductos.getValueAt(fila, 1).toString());
+                panelFormulario.txtCantidad.setText(panelInventario.tablaProductos.getValueAt(fila, 3).toString());
+                panelFormulario.txtPrecio.setText(panelInventario.tablaProductos.getValueAt(fila, 2).toString());
+                panelFormulario.txtDescripcion.setText("");
+                panelFormulario.txtStockMinimo.setText("");
+                panelFormulario.btnEditar.setText("Editar"); 
+                cambiarPanelCentral(this.panelFormulario);   
+            } else {
+                idSeleccionado = (int) panelInventario.tablaHerramientas.getValueAt(fila, 0);
+                panelFormularioHerramienta.txtIdHerramienta.setText(String.valueOf(idSeleccionado));
+                panelFormularioHerramienta.txtIdHerramienta.setEditable(false); 
+                panelFormularioHerramienta.txtNombre.setText(panelInventario.tablaHerramientas.getValueAt(fila, 1).toString());
+                panelFormularioHerramienta.btnEditar.setText("Editar"); 
+                cambiarPanelCentral(this.panelFormularioHerramienta);
+            }
+        } 
+        else if (seleccion == 2) { // Eliminar
+            if (tipo.equals("Producto")) {
+                idSeleccionado = (int) panelInventario.tablaProductos.getValueAt(fila, 0);
+                eliminarProducto(idSeleccionado); 
+            } else {
+                idSeleccionado = (int) panelInventario.tablaHerramientas.getValueAt(fila, 0);
+                eliminarHerramienta(idSeleccionado); 
+            }
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-           
-            // NAVEGACIÓN GENERAL DEL SIDEBAR
-          
             if (e.getSource() == vistaPrincipal.getsidebar().bCasa) {
-                cambiarPanelCentral(new PanelBienvenida("Isabella", "Supervisora"));
+                cambiarPanelCentral(new PanelBienvenida(usuarioLogueado.getNombre(), usuarioLogueado.getRol()));
             }
 
             if (e.getSource() == vistaPrincipal.getsidebar().misCitas) {
                 cambiarPanelCentral(this.panelInventario);
-                listarProductosEnTabla(); 
-                listarHerramientasEnTabla(); 
+                listarProductosEnTabla();
+                listarHerramientasEnTabla();
             }
 
             if (e.getSource() == panelInventario.cerrarSesion) {
                 ejecutarCerrarSesion();
             }
 
-       
-            // ACCIONES DEL MÓDULO PRODUCTOS
-         
             if (e.getSource() == panelInventario.btnAgregarProducto) {
-                limpiarCamposFormularioProducto(); 
+                limpiarCamposFormularioProducto();            
                 panelFormulario.btnEditar.setText("Guardar"); 
-                cambiarPanelCentral(this.panelFormulario); 
+                cambiarPanelCentral(this.panelFormulario);     
             }
 
             if (e.getSource() == panelFormulario.btnImagen) {
-                buscarYCopiarImagen("producto");
+                buscarYCopiarImagen("producto"); 
             }
 
             if (e.getSource() == panelFormulario.btnEditar) {
                 if (panelFormulario.btnEditar.getText().equals("Guardar")) {
                     registrarNuevoProducto(); 
+                } else {
+                    actualizarProducto();     
                 }
             }
 
             if (e.getSource() == panelFormulario.btnVolver) {
                 cambiarPanelCentral(this.panelInventario); 
-                listarProductosEnTabla(); 
+                listarProductosEnTabla();                  
             }
 
-          
-            // ACCIONES DEL MÓDULO HERRAMIENTAS
-         
             if (e.getSource() == panelInventario.btnAgregarHerramienta) {
                 limpiarCamposFormularioHerramienta();
-                panelFormularioHerramienta.btnEditar.setText("Guardar");
+                panelFormularioHerramienta.btnEditar.setText("Guardar"); 
                 cambiarPanelCentral(this.panelFormularioHerramienta);
             }
 
             if (e.getSource() == panelFormularioHerramienta.btnImagen) {
-                buscarYCopiarImagen("herramienta");
+                buscarYCopiarImagen("herramienta"); 
             }
 
             if (e.getSource() == panelFormularioHerramienta.btnEditar) {
                 if (panelFormularioHerramienta.btnEditar.getText().equals("Guardar")) {
-                    registrarNuevaHerramienta();
+                    registrarNuevaHerramienta(); 
+                } else {
+                    actualizarHerramienta();     
                 }
             }
 
@@ -162,73 +260,180 @@ public class ControladorInventarioOperario implements ActionListener{
                 cambiarPanelCentral(this.panelInventario);
                 listarHerramientasEnTabla();
             }
-            
-        } catch (NullPointerException npe) {
-            JOptionPane.showMessageDialog(vistaPrincipal, 
-                "Error de referencia: Un componente visual o dato requerido no se cargó correctamente.", 
-                "Error de Software", JOptionPane.ERROR_MESSAGE);
+
+            if (e.getSource() == panelSalidaInsumo.btnRegistrarSalida) {
+                ejecutarRestaDeStock(); 
+            }
+
+            if (e.getSource() == panelSalidaInsumo.btnVolver) {
+                cambiarPanelCentral(this.panelInventario);
+                listarProductosEnTabla();
+            }
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(vistaPrincipal, 
-                "Ocurrió un comportamiento inesperado en la interfaz: " + ex.getMessage(), 
-                "Error General", JOptionPane.ERROR_MESSAGE);
+            System.err.println("Error de control en eventos: " + ex.getMessage());
         }
     }
 
-    /**
-     * Copia la imagen seleccionada de manera limpia a la carpeta del proyecto.
-     */
+    private void ejecutarRestaDeStock() {
+        try {
+            int cantidadARestar = Integer.parseInt(panelSalidaInsumo.txtCantidadSalida.getText().trim());
+            if (cantidadARestar <= 0) {
+                JOptionPane.showMessageDialog(panelSalidaInsumo, "La cantidad debe ser mayor a cero.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (productoDao.registrarSalidaStock(idSeleccionado, cantidadARestar)) {
+                JOptionPane.showMessageDialog(panelSalidaInsumo, "¡Transacción exitosa! El stock se actualizó.");
+                cambiarPanelCentral(this.panelInventario); 
+                listarProductosEnTabla();                  
+            } else {
+                JOptionPane.showMessageDialog(panelSalidaInsumo, "Error: Inventario insuficiente.", "Aviso", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(panelSalidaInsumo, "Ingrese un número entero válido.", "Formato Inválido", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void registrarNuevoProducto() {
+        try {
+            Producto nuevoProducto = new Producto();
+            nuevoProducto.setNombreProducto(panelFormulario.txtNombre.getText().trim());
+            nuevoProducto.setDescripcion(panelFormulario.txtDescripcion.getText().trim());
+            nuevoProducto.setStockActual(Integer.parseInt(panelFormulario.txtCantidad.getText().trim()));
+            nuevoProducto.setStockMinimo(panelFormulario.txtStockMinimo.getText().trim().isEmpty() ? 0 : Integer.parseInt(panelFormulario.txtStockMinimo.getText().trim()));
+
+            String precioLimpio = panelFormulario.txtPrecio.getText().replace("$", "").replace(".", "").trim();
+            nuevoProducto.setPrecioCompra(Double.parseDouble(precioLimpio));
+            nuevoProducto.setUrlImagen(panelFormulario.lblNombreImagen.getText());
+
+            if (productoDao.agregar(nuevoProducto) > 0) {
+                JOptionPane.showMessageDialog(panelFormulario, "¡Insumo registrado con éxito!");
+                cambiarPanelCentral(this.panelInventario); 
+                listarProductosEnTabla();                  
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(panelFormulario, "Campos inválidos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void actualizarProducto() {
+        try {
+            Producto p = new Producto();
+            p.setIdProducto(idSeleccionado); 
+            p.setNombreProducto(panelFormulario.txtNombre.getText().trim());
+            p.setDescripcion(panelFormulario.txtDescripcion.getText().trim());
+            p.setStockActual(Integer.parseInt(panelFormulario.txtCantidad.getText().trim()));
+            p.setStockMinimo(panelFormulario.txtStockMinimo.getText().trim().isEmpty() ? 0 : Integer.parseInt(panelFormulario.txtStockMinimo.getText().trim()));
+
+            String precioLimpio = panelFormulario.txtPrecio.getText().replace("$", "").replace(".", "").trim();
+            p.setPrecioCompra(Double.parseDouble(precioLimpio));
+            p.setUrlImagen(panelFormulario.lblNombreImagen.getText());
+
+            if (productoDao.editar(p) > 0) { 
+                JOptionPane.showMessageDialog(panelFormulario, "¡Insumo modificado correctamente!");
+                cambiarPanelCentral(this.panelInventario);
+                listarProductosEnTabla();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(panelFormulario, "Error al editar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void registrarNuevaHerramienta() {
+        try {
+            Herramientas nuevaHerramienta = new Herramientas();
+            nuevaHerramienta.setIdHerramienta(Integer.parseInt(panelFormularioHerramienta.txtIdHerramienta.getText().trim()));
+            nuevaHerramienta.setNombreHerramienta(panelFormularioHerramienta.txtNombre.getText().trim());
+            nuevaHerramienta.setEstadoActual("Excelente"); 
+
+            if (herramientaDao.agregar(nuevaHerramienta) > 0) {
+                JOptionPane.showMessageDialog(panelFormularioHerramienta, "¡Herramienta registrada exitosamente!");
+                cambiarPanelCentral(this.panelInventario);
+                listarHerramientasEnTabla(); 
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(panelFormularioHerramienta, "Error al registrar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void actualizarHerramienta() {
+        try {
+            Herramientas h = new Herramientas();
+            h.setIdHerramienta(idSeleccionado); 
+            h.setNombreHerramienta(panelFormularioHerramienta.txtNombre.getText().trim());
+            h.setEstadoActual("Excelente"); 
+
+            if (herramientaDao.editar(h) > 0) { 
+                JOptionPane.showMessageDialog(panelFormularioHerramienta, "¡Herramienta modificada correctamente!");
+                cambiarPanelCentral(this.panelInventario);
+                listarHerramientasEnTabla();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(panelFormularioHerramienta, "Error al actualizar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void eliminarProducto(int id) {
+        int confirmar = JOptionPane.showConfirmDialog(panelInventario, "¿Eliminar permanentemente este insumo?", "Confirmar", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirmar == JOptionPane.YES_OPTION) {
+            if (productoDao.eliminar(id) > 0) {
+                listarProductosEnTabla(); 
+            }
+        }
+    }
+
+    private void eliminarHerramienta(int id) {
+        int confirmar = JOptionPane.showConfirmDialog(panelInventario, "¿Eliminar permanentemente esta herramienta?", "Confirmar", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirmar == JOptionPane.YES_OPTION) {
+            if (herramientaDao.eliminar(id) > 0) {
+                listarHerramientasEnTabla(); 
+            }
+        }
+    }
+
     private void buscarYCopiarImagen(String tipoModulo) {
         JFileChooser selector = new JFileChooser();
         FileNameExtensionFilter filtro = new FileNameExtensionFilter("Imágenes (JPG, PNG)", "jpg", "jpeg", "png");
         selector.setFileFilter(filtro);
-        
+
         JPanel panelPadre = tipoModulo.equals("producto") ? panelFormulario : panelFormularioHerramienta;
         int resultado = selector.showOpenDialog(panelPadre);
-        
+
         if (resultado == JFileChooser.APPROVE_OPTION) {
             try {
                 File archivoSeleccionado = selector.getSelectedFile();
                 String nombreOriginal = archivoSeleccionado.getName();
-                
                 String prefijo = tipoModulo.equals("producto") ? "prod_" : "herr_";
                 String nombreLimpio = System.currentTimeMillis() + "_" + prefijo + nombreOriginal.replaceAll("\\s+", "_");
-                
+
                 Path destino = Paths.get("src/nexusgo/img/" + nombreLimpio);
                 Files.createDirectories(destino.getParent());
                 Files.copy(archivoSeleccionado.toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
-                
+
                 if (tipoModulo.equals("producto")) {
-                    panelFormulario.lblNombreImagen.setText(nombreLimpio);
+                    panelFormulario.lblNombreImagen.setText(nombreLimpio); 
                 } else {
-                    panelFormularioHerramienta.lblNombreImagen.setText(nombreLimpio);
+                    panelFormularioHerramienta.lblNombreImagen.setText(nombreLimpio); 
                 }
-                
-                JOptionPane.showMessageDialog(panelPadre, "Imagen cargada y vinculada correctamente al recurso.");
-                
+
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panelPadre, 
-                    "Fallo en la transferencia de archivos físicos: " + ex.getMessage(), 
-                    "Error de Archivo", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panelPadre, "Error de transferencia de archivo: " + ex.getMessage(), "Error de Imagen", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     public void listarProductosEnTabla() {
         try {
-            modeloTablaProductos = (DefaultTableModel) panelInventario.tablaProductos.getModel();
-            modeloTablaProductos.setRowCount(0); 
-            
-            List<Producto> lista = productoDao.listar(); 
-            if (lista == null) throw new NullPointerException("La lista de productos está inaccesible.");
-
-            Object[] fila = new Object[5];
-            for (Producto p : lista) {
-                fila[0] = p.getIdProducto();
-                fila[1] = p.getNombreProducto();
-                fila[2] = p.getPrecioCompra();
-                fila[3] = p.getStockActual();
-                fila[4] = "Insumo Interno"; 
-                modeloTablaProductos.addRow(fila); 
+            DefaultTableModel modeloBlindado = new DefaultTableModel(new Object[]{"ID", "Nombre", "Precio", "Stock", "Tipo"}, 0) {
+                @Override public boolean isCellEditable(int row, int column) { return false; }
+            };
+            panelInventario.tablaProductos.setModel(modeloBlindado); 
+            List<Producto> lista = productoDao.listar();
+            if (lista != null) {
+                for (Producto p : lista) {
+                    modeloBlindado.addRow(new Object[]{p.getIdProducto(), p.getNombreProducto(), p.getPrecioCompra(), p.getStockActual(), "Insumo Interno"});
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al listar productos: " + e.getMessage());
@@ -237,90 +442,20 @@ public class ControladorInventarioOperario implements ActionListener{
 
     public void listarHerramientasEnTabla() {
         try {
-            modeloTablaHerramientas = (DefaultTableModel) panelInventario.tablaHerramientas.getModel();
-            modeloTablaHerramientas.setRowCount(0); 
-            
-            List<Herramientas> lista = herramientaDao.listar(); 
-            if (lista == null) throw new NullPointerException("La tabla de herramientas no devolvió registros.");
-
-            Object[] fila = new Object[4];
-            for (Herramientas h : lista) {
-                fila[0] = h.getIdHerramienta();
-                fila[1] = h.getNombreHerramienta();
-                fila[2] = h.getEstadoActual();
-                fila[3] = "Activo"; 
-                modeloTablaHerramientas.addRow(fila);
+            DefaultTableModel modeloBlindado = new DefaultTableModel(new Object[]{"ID", "Nombre", "Estado", "Tipo"}, 0) {
+                @Override public boolean isCellEditable(int row, int column) { return false; }
+            };
+            panelInventario.tablaHerramientas.setModel(modeloBlindado);
+            List<Herramientas> lista = herramientaDao.listar();
+            if (lista != null) {
+                for (Herramientas h : lista) {
+                    modeloBlindado.addRow(new Object[]{h.getIdHerramienta(), h.getNombreHerramienta(), h.getEstadoActual(), "Activo"});
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al listar herramientas: " + e.getMessage());
         }
     }
-
-    private void registrarNuevoProducto() {
-        if (panelFormulario.txtNombre.getText().trim().isEmpty() || 
-            panelFormulario.txtCantidad.getText().trim().isEmpty() || 
-            panelFormulario.txtPrecio.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(panelFormulario, "Llene los campos obligatorios.", "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
-            return; 
-        }
-
-        try {
-            Producto nuevoProducto = new Producto();
-            nuevoProducto.setNombreProducto(panelFormulario.txtNombre.getText().trim());
-            nuevoProducto.setDescripcion(panelFormulario.txtDescripcion.getText().trim());
-            nuevoProducto.setStockActual(Integer.parseInt(panelFormulario.txtCantidad.getText().trim()));
-            nuevoProducto.setStockMinimo(panelFormulario.txtStockMinimo.getText().trim().isEmpty() ? 0 : Integer.parseInt(panelFormulario.txtStockMinimo.getText().trim()));
-            
-            String precioLimpio = panelFormulario.txtPrecio.getText().replace("$", "").replace(".", "").trim();
-            nuevoProducto.setPrecioCompra(Double.parseDouble(precioLimpio));
-            nuevoProducto.setUrlImagen(panelFormulario.lblNombreImagen.getText());
-
-            int resultado = productoDao.agregar(nuevoProducto);
-
-            if (resultado > 0) {
-                JOptionPane.showMessageDialog(panelFormulario, "¡Producto registrado con éxito!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cambiarPanelCentral(this.panelInventario); 
-                listarProductosEnTabla(); 
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(panelFormulario, "Error al guardar el producto: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void registrarNuevaHerramienta() {
-        if (panelFormularioHerramienta.txtNombre.getText().trim().isEmpty() || 
-            panelFormularioHerramienta.txtIdHerramienta.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(panelFormularioHerramienta, "Por favor, ingrese el ID y el Nombre de la herramienta.", "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        try {
-            Herramientas nuevaHerramienta = new Herramientas();
-            
-            // Conversión estricta de String de la vista a int del Modelo
-            int idConvertido = Integer.parseInt(panelFormularioHerramienta.txtIdHerramienta.getText().trim());
-            nuevaHerramienta.setIdHerramienta(idConvertido);
-            
-            nuevaHerramienta.setNombreHerramienta(panelFormularioHerramienta.txtNombre.getText().trim());
-            nuevaHerramienta.setEstadoActual("Excelente"); 
-
-            //  Llama al método agregar() que ya existe en el DAO
-            int resultado = herramientaDao.agregar(nuevaHerramienta);
-
-            if (resultado > 0) {
-                JOptionPane.showMessageDialog(panelFormularioHerramienta, "¡Herramienta registrada exitosamente en Sistema NEXUS!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cambiarPanelCentral(this.panelInventario);
-                listarHerramientasEnTabla();
-            } else {
-                JOptionPane.showMessageDialog(panelFormularioHerramienta, "La base de datos rechazó el registro de la herramienta.", "Error Servidor", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (NumberFormatException nfe) {
-            JOptionPane.showMessageDialog(panelFormularioHerramienta, "El ID de la herramienta debe ser exclusivamente un número entero.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(panelFormularioHerramienta, "Error al registrar la herramienta: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
 
     private void limpiarCamposFormularioProducto() {
         panelFormulario.txtNombre.setText("");
@@ -333,23 +468,32 @@ public class ControladorInventarioOperario implements ActionListener{
 
     private void limpiarCamposFormularioHerramienta() {
         panelFormularioHerramienta.txtIdHerramienta.setText("");
+        panelFormularioHerramienta.txtIdHerramienta.setEditable(true); 
         panelFormularioHerramienta.txtNombre.setText("");
         panelFormularioHerramienta.lblNombreImagen.setText("ningún archivo seleccionado");
     }
 
     private void ejecutarCerrarSesion() {
-        int confirmar = JOptionPane.showConfirmDialog(vistaPrincipal, "¿Desea cerrar sesión?", "Sistema NEXUS", JOptionPane.YES_NO_OPTION);
-        if (confirmar == JOptionPane.YES_OPTION) vistaPrincipal.dispose();
+        int confirmar = JOptionPane.showConfirmDialog(vistaPrincipal, "¿Desea cerrar sesión en NEXUS?", "Cerrar Sesión", JOptionPane.YES_NO_OPTION);
+        if (confirmar == JOptionPane.YES_OPTION) {
+            vistaPrincipal.dispose();
+            VistaInicioSesion loginVista = new VistaInicioSesion();
+            new ControladorInicioSesion(loginVista);
+            loginVista.setLocationRelativeTo(null);
+            loginVista.setVisible(true);
+        }
     }
 
     private void cambiarPanelCentral(JPanel panelNuevo) {
         try {
-            vistaPrincipal.getContenido().removeAll(); 
+            vistaPrincipal.getContenido().removeAll();                         
             vistaPrincipal.getContenido().add(panelNuevo, java.awt.BorderLayout.CENTER); 
-            vistaPrincipal.revalidate(); 
-            vistaPrincipal.repaint(); 
+            vistaPrincipal.revalidate();                                       
+            vistaPrincipal.repaint();                                          
         } catch (Exception e) {
-            System.err.println("Error en navegación: " + e.getMessage());
+            System.err.println("Error en enrutador de vistas: " + e.getMessage());
         }
     }
+
+  
 }

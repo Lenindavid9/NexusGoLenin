@@ -13,7 +13,7 @@ import java.util.List;
 public interface Crud<T> {
     public List<T> listar();
     public int agregar(T objeto);
-    public int editar(T objeto);
+    public int editar(T t);
     public int eliminar(int id);
     
 }

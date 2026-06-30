@@ -4,21 +4,12 @@
  */
 package nexusgo.view;
 
-import javax.swing.ImageIcon;
-import javax.swing.JPanel;
-
 /**
  *
  * @author USUARIO
  */
-public class ImagenFondo extends JPanel{
-    
- 
-    public ImagenFondo(){
-        
-  
+public class VistaHorasDeUso {
     
     
-    }
     
 }

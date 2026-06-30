@@ -1,0 +1,2 @@
+registro.VistaRegistroDeUsuario
+registro.VistaRegistroDeUsuario$VistaRegistroDeUsuario

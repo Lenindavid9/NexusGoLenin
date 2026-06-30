@@ -20,36 +20,29 @@ import nexusgo.model.Usuario;
  */
 public class VistaPrincipalOperario extends JFrame {
 
-  public VistaBarraLateral sidebar;
+    public VistaBarraLateral sidebar;
     public FlowLayout miflow;
     public JLabel titulo, mensaje;
     public JButton breporte, barranque;
     public PanelBienvenida bienvenida;
-    
+
     // Este panel será el contenedor dinámico donde se meterán los módulos
-    private JPanel contenido; 
-    
-    // Usuario de prueba para la sesión actual
-    Usuario lenin = new Usuario("Isabella", "Supervisora");
+    private JPanel contenido;
 
     public VistaPrincipalOperario() {
-        super("Sistema NexusGO - Panel de Operario");
+        super("Sistema NexusGO - Panel de Gestión");
         setLayout(new BorderLayout());
-        
+
         // 1. Inicializar y posicionar la barra lateral a la izquierda (WEST)
         sidebar = new VistaBarraLateral();
         add(sidebar, BorderLayout.WEST);
-        
+
         // 2. Inicializar el panel 'contenido' explícitamente con BorderLayout.
         contenido = new JPanel(new BorderLayout());
-        
-        // 3. Inicializar el Panel de Bienvenida inicial
-        bienvenida = new PanelBienvenida(lenin.getNombre(), lenin.getRol());
-        
-        // 4. Meter la bienvenida DENTRO del panel de contenido
-        contenido.add(bienvenida, BorderLayout.CENTER);
 
-        // 5. Agregar el contenedor general 'contenido' al centro del JFrame
+        // 3. Agregar el contenedor general 'contenido' al centro del JFrame
+        // NOTA: Ya no metemos aquí la bienvenida de forma estática ni vacía.
+        // El ControladorInventarioOperario se encargará de inyectar el panel con los datos de la BD.
         add(contenido, BorderLayout.CENTER);
 
         // Dimensiones de la ventana optimizadas para que quepan bien las tablas de inventario
@@ -57,20 +50,21 @@ public class VistaPrincipalOperario extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
-    
+
     /**
-     * Getter público para que el controlador pueda escuchar los botones del menú lateral.
+     * Getter público para que el controlador pueda escuchar los botones del
+     * menú lateral.
      */
-    public VistaBarraLateral getsidebar(){
+    public VistaBarraLateral getsidebar() {
         return sidebar;
     }
-    
+
     /**
      * Getter público para el panel de contenido central dinámico.
      */
     public JPanel getContenido() {
         return contenido;
     }
-      
-
 }
+    
+

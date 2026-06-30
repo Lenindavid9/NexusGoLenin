@@ -95,25 +95,44 @@ import java.util.List;
         return lista;
     }
     
-    public boolean registrarSalidaStock(int idProducto, int cantidad) {
-    //  Ajusta los nombres de las columnas y tabla según tu base de datos
-    String sql = "UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?";
-    
-    try (Connection con = getConnetion(); // Usando tu método de conexión habitual
-         PreparedStatement ps = con.prepareStatement(sql)) {
-        
-        ps.setInt(1, cantidad);
-        ps.setInt(2, idProducto);
-        
-        // Si las filas afectadas son mayores a 0, la operación fue un éxito
-        return ps.executeUpdate() > 0;
-        
-    } catch (SQLException e) {
-        System.err.println("Error SQL al registrar salida de stock: " + e.getMessage());
-        return false;
+    // D - DELETE: ELIMINAR HERRAMIENTA
+    public int eliminar(int id) {
+        String sql = "DELETE FROM herramientas WHERE id_herramienta = ?";
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            return ps.executeUpdate(); 
+
+        } catch (SQLException e) {
+            System.out.println("Error al eliminar herramienta en DAO: " + e.getMessage());
+        }
+        return 0;
     }
-}
-    
+ 
+    public int editar(Herramientas herramienta) {
+        String sql = """
+                     UPDATE herramientas 
+                     SET nombre_herramienta = ?, estado_actual = ? 
+                     WHERE id_herramienta = ?
+                     """;
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, herramienta.getNombreHerramienta());
+            ps.setString(2, herramienta.getEstadoActual());
+            ps.setInt(3, herramienta.getIdHerramienta());
+
+            return ps.executeUpdate(); 
+
+        } catch (SQLException e) {
+            System.out.println("Error al editar herramienta en DAO: " + e.getMessage());
+        }
+        return 0;
+    }
+  
     
 
 }

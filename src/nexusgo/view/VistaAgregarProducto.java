@@ -74,8 +74,8 @@ public class VistaAgregarProducto extends JPanel{
         // Descripción
         panelCampos.add(crearLabel("Descripcion del producto", fuenteLabels, colorTextoLabels));
         txtDescripcion = new JTextArea(3, 20);
-        txtDescripcion.setLineWrap(true);
-        txtDescripcion.setWrapStyleWord(true);
+        txtDescripcion.setLineWrap(true);//texto se ajustará a la siguiente línea si es demasiado largo para el ancho del área.
+        txtDescripcion.setWrapStyleWord(true);//Configura el ajuste para que ocurra en los límites de palabras, es decir, no cortará palabras a la mitad.
         txtDescripcion.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(180, 180, 180), 1, true),
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)

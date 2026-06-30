@@ -16,17 +16,13 @@ import java.util.List;
  * @author USUARIO
  */
 public class ProductoDao implements Crud<Producto> {
-
-   Conexion conexion = new Conexion();
     
-    // NOTA: Se eliminaron las variables globales con, ps y rs de aquí para evitar
-    // conflictos de hilos, ya que se manejan correctamente de forma local dentro del try-with-resources.
+    Conexion conexion = new Conexion();
 
     // LISTAR PRODUCTOS
     @Override
     public List<Producto> listar() {
         List<Producto> lista = new ArrayList<>();
-        // 🚨 CORREGIDO: Cambiado de 'producto' a 'productos' (en plural)
         String sql = "SELECT * FROM productos";
 
         try (Connection con = conexion.getConection(); 
@@ -105,6 +101,7 @@ public class ProductoDao implements Crud<Producto> {
         }
         return 0;
     }
+  
 
     // D - DELETE: ELIMINAR PRODUCTO
     @Override
@@ -123,10 +120,9 @@ public class ProductoDao implements Crud<Producto> {
         return 0;
     }
 
-    // MÉTODO PROPIO (Buscar un único producto)
+    // MÉTODO PROPIO: Buscar un único producto por ID
     public Producto buscarPorId(int id) {
         Producto producto = null;
-        // 🚨 CORREGIDO: Se añadió el WHERE y se seleccionaron todos los campos (*) para poder mapear el objeto completo sin errores
         String sql = "SELECT * FROM productos WHERE id_producto = ?";
         
         try (Connection con = conexion.getConection(); 
@@ -150,5 +146,59 @@ public class ProductoDao implements Crud<Producto> {
         }
         return producto;
     }
+
+    // NUEVO MÉTODO PROPIO: DESCONTAR EL STOCK (REGISTRAR SALIDA EN BASE DE DATOS)
+    public boolean registrarSalidaStock(int idProducto, int cantidad) {
+        // Descuenta si hay stock suficiente en inventario para evitar que caiga a números negativos
+        String sql = """
+                     UPDATE productos 
+                     SET stock_actual = stock_actual - ? 
+                     WHERE id_producto = ? AND stock_actual >= ?
+                     """;
+
+        try (Connection con = conexion.getConection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, cantidad);
+            ps.setInt(2, idProducto);
+            ps.setInt(3, cantidad); // Condición lógica de resguardo de stock
+
+            int filasAfectadas = ps.executeUpdate();
+            return filasAfectadas > 0; // Retorna verdadero si se pudo actualizar el stock sin inconvenientes
+
+        } catch (SQLException e) {
+            System.out.println("Error al registrar salida de stock en DAO: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public List<Producto> listarProductosCliente() {
+        List<Producto> listaProds = new ArrayList<>();
+        // Consulta exacta basada en tu script SQL
+        String sql = "SELECT nombre_producto, precio_compra, stock_actual, stock_minimo, url_imagen FROM productos";
+        
+        try (Connection con = conexion.getConection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Producto prod = new Producto();
+                prod.setNombreProducto(rs.getString("nombre_producto"));
+                prod.setPrecioCompra(rs.getDouble("precio_compra"));
+                prod.setStockActual(rs.getInt("stock_actual"));
+                prod.setStockMinimo(rs.getInt("stock_minimo"));
+                prod.setUrlImagen(rs.getString("url_imagen"));
+                
+                listaProds.add(prod);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error al listar productos para el cliente: " + e.getMessage());
+        }
+        return listaProds;
+    }
+    
+    
+
+  
 
 }
